@@ -3,10 +3,76 @@
 //  AppDemo1
 //
 //  Created by Kyley Jones on 11/1/23.
-//
 
+//struct SignUpView: View {
+//    @State private var firstName = ""
+//    @State private var lastName = ""
+//    @State private var email = ""
+//
+//    var body: some View {
+//        VStack {
+//            Image("codingIcon")
+//                .resizable()
+//                .aspectRatio(contentMode: .fit)
+//                .frame(width: 50, height: 50)
+//
+//            Text("Sign Up Here")
+//                .font(.largeTitle)
+//                .foregroundColor(.black)
+//                .padding()
+//
+//            // Sign-up form elements
+//            // First Name TextField
+//            TextField("First name", text: $firstName)
+//                .textFieldStyle(RoundedBorderTextFieldStyle())
+//                .padding()
+//
+//            // Last Name TextField
+//            TextField("Last Name", text: $lastName)
+//                .textFieldStyle(RoundedBorderTextFieldStyle())
+//                .padding()
+//
+//            // Email TextField
+//            TextField("Email", text: $email)
+//                .textFieldStyle(RoundedBorderTextFieldStyle())
+//                .padding()
+//
+//            NavigationLink(destination: ProductsView()) {
+//                Text("Next")
+//                    .foregroundColor(.white)
+//                    .padding()
+//                    .background(Color.black)
+//                    .cornerRadius(8)
+//            }
+//        }
+//
+//    }
+//}
+
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        ContentView()
+    }
+}
 
 import SwiftUI
+
+// Extensive search bar
+struct SearchBar: View {
+    @Binding var text: String
+
+    var body: some View {
+        HStack {
+            TextField("Search...", text: $text)
+                .padding(8)
+                .background(Color(.systemGray6))
+                .cornerRadius(10)
+                .padding([.leading, .trailing], 10)
+        }
+        .padding(.top, 10)
+        .padding(.bottom, 10)
+    }
+}
 
 // global url for now since the site is the same
 let websiteURL = "https://codingincolor.net/tech-development-application/"
@@ -44,7 +110,6 @@ struct ContentView: View {
 }
 
 struct StateView: View {
-    // Define an array of state options for the dropdown menu
     let stateOptions = ["Select State", "AZ", "CA", "NV"]
     
     @State private var selectedStateIndex = 0
@@ -63,7 +128,7 @@ struct StateView: View {
             .pickerStyle(MenuPickerStyle())
 
             if selectedStateIndex != 0 {
-                NavigationLink(destination: selectedStateIndex == 1 ? AZProductsView() : AZProductsView()) {
+                NavigationLink(destination: destinationViewForSelectedState()) {
                     Text("Go to Product Page")
                         .foregroundColor(.white)
                         .padding()
@@ -78,92 +143,91 @@ struct StateView: View {
             }
         }
     }
-}
 
-
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView()
+    // Helper function to determine the destination view based on the selected state
+    func destinationViewForSelectedState() -> some View {
+        switch selectedStateIndex {
+        case 1:
+            return AnyView(AZProductsView())
+        case 2:
+            return AnyView(CAProductsView())
+        case 3:
+            return AnyView(NVProductsView())
+        default:
+            return AnyView(EmptyView())
+        }
     }
 }
-
-//struct SignUpView: View {
-//    @State private var firstName = ""
-//    @State private var lastName = ""
-//    @State private var email = ""
-//    
-//    var body: some View {
-//        VStack {
-//            Image("codingIcon")
-//                .resizable()
-//                .aspectRatio(contentMode: .fit)
-//                .frame(width: 50, height: 50)
-//            
-//            Text("Sign Up Here")
-//                .font(.largeTitle)
-//                .foregroundColor(.black)
-//                .padding()
-//            
-//            // Sign-up form elements
-//            // First Name TextField
-//            TextField("First name", text: $firstName)
-//                .textFieldStyle(RoundedBorderTextFieldStyle())
-//                .padding()
-//            
-//            // Last Name TextField
-//            TextField("Last Name", text: $lastName)
-//                .textFieldStyle(RoundedBorderTextFieldStyle())
-//                .padding()
-//            
-//            // Email TextField
-//            TextField("Email", text: $email)
-//                .textFieldStyle(RoundedBorderTextFieldStyle())
-//                .padding()
-//
-//            NavigationLink(destination: ProductsView()) {
-//                Text("Next")
-//                    .foregroundColor(.white)
-//                    .padding()
-//                    .background(Color.black)
-//                    .cornerRadius(8)
-//            }
-//        }
-//        
-//    }
-//}
 
 struct ProductsView: View {
+    @State private var searchText = ""
+    let allProducts = (1..<7).map { "Product \($0)" }
+
+    var filteredProducts: [String] {
+        if searchText.isEmpty {
+            return allProducts
+        } else {
+            return allProducts.filter { $0.localizedCaseInsensitiveContains(searchText) }
+        }
+    }
+
     var body: some View {
-        Text("Product List")
-            .font(.largeTitle)
-            .foregroundColor(.black)
-            .padding()
-        
-        let gridItems = [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)]
-        
-        ScrollView {
-            LazyVGrid(columns: gridItems, spacing: 10) {
-                ForEach(1 ..< 7) { imageNumber in
-                    NavigationLink(destination: getPageViewForImage(imageNumber)) {
-                        VStack {
-                            Spacer() // Pushes the text to the top
-                            Image("image\(imageNumber)")
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                                .frame(width: 150, height: 150)
-                            
-                            Text("Product \(imageNumber)")
-                                .font(.caption)
-                                .foregroundColor(.black)
+        VStack {
+            SearchBar(text: $searchText)
+
+            Text("Full Product List")
+                .font(.largeTitle)
+                .foregroundColor(.black)
+                .padding()
+
+            let gridItems = [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)]
+
+            ScrollView {
+                LazyVGrid(columns: gridItems, spacing: 10) {
+                    ForEach(filteredProducts, id: \.self) { product in
+                        NavigationLink(destination: getPageViewForProduct(product)) {
+                            VStack {
+                                Spacer()
+                                Image("image\(product.last!)")
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(width: 150, height: 150)
+
+                                Text(product)
+                                    .font(.caption)
+                                    .foregroundColor(.black)
+                            }
                         }
-                        
                     }
                 }
+                .padding()
             }
-            .padding()
         }
-    
     }
+    
+    func getPageViewForProduct(_ product: String) -> some View {
+        guard let productNumber = Int(String(product.last ?? "1")) else {
+            return AnyView(EmptyView())
+        }
+        switch productNumber {
+        case 1:
+            return AnyView(Page1View())
+        case 2:
+            return AnyView(Page2View())
+        case 3:
+            return AnyView(Page3View())
+        case 4:
+            return AnyView(Page4View())
+        case 5:
+            return AnyView(Page5View())
+        case 6:
+            return AnyView(Page6View())
+        default:
+            return AnyView(EmptyView())
+        }
+    }
+}
+
 
     // Helper function to return the appropriate destination view for each image
     func getPageViewForImage(_ imageNumber: Int) -> some View {
@@ -184,7 +248,6 @@ struct ProductsView: View {
             return AnyView(EmptyView())
         }
     }
-}
 
 struct Page1View: View {
     var body: some View {
@@ -214,42 +277,6 @@ struct Page1View: View {
     }
 }
 
-struct AZProductsView: View {
-    var body: some View {
-        Text("Product 1")
-            .font(.largeTitle)
-            .foregroundColor(.black)
-            .padding()
-        
-        Image("image1")
-            .resizable()
-            .aspectRatio(contentMode: .fit)
-            .frame(width: 150, height: 150)
-
-        Button(action: {
-            // Open the website URL
-            if let url = URL(string: websiteURL) {
-                UIApplication.shared.open(url)
-            }
-        }) {
-            Text("Product Website")
-                .foregroundColor(.white)
-                .padding()
-                .background(Color.green)
-                .cornerRadius(8)
-        }
-        
-        NavigationLink(destination: Page2View()) {
-            Text("Next Product")
-                .foregroundColor(.white)
-                .padding()
-                .background(Color.black)
-                .cornerRadius(10)
-        }
-        .padding(.top, 20)
-    }
-}
-
 struct Page2View: View {
     var body: some View {
         Text("Product 2")
@@ -261,7 +288,7 @@ struct Page2View: View {
             .resizable()
             .aspectRatio(contentMode: .fit)
             .frame(width: 150, height: 150)
-
+            .padding(.bottom, 15)
 
         Button(action: {
             // Open the website URL
@@ -275,15 +302,6 @@ struct Page2View: View {
                 .background(Color.green)
                 .cornerRadius(8)
         }
-        
-        NavigationLink(destination: ProductsView()) {
-            Text("All Products")
-                .foregroundColor(.white)
-                .padding()
-                .background(Color.black)
-                .cornerRadius(8)
-        }
-        .padding(.top, 20)
     }
 }
 
@@ -385,7 +403,7 @@ struct Page6View: View {
             .resizable()
             .aspectRatio(contentMode: .fit)
             .frame(width: 150, height: 150)
-
+            .padding(.bottom, 15)
         
         Button(action: {
             // Open the website URL
@@ -398,6 +416,261 @@ struct Page6View: View {
                 .padding()
                 .background(Color.green)
                 .cornerRadius(8)
+        }
+    }
+}
+
+// Arizona State View
+struct AZProductsView: View {
+    @State private var searchText = ""
+    let allProducts = (1..<3).map { "Product \($0)" }
+
+    var filteredProducts: [String] {
+        if searchText.isEmpty {
+            return allProducts
+        } else {
+            return allProducts.filter { $0.localizedCaseInsensitiveContains(searchText) }
+        }
+    }
+
+    var body: some View {
+        VStack {
+            SearchBar(text: $searchText)
+
+            Text("AZ Product List")
+                .font(.largeTitle)
+                .foregroundColor(.black)
+                .padding()
+
+            let gridItems = [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)]
+
+            ScrollView {
+                LazyVGrid(columns: gridItems, spacing: 10) {
+                    ForEach(filteredProducts, id: \.self) { product in
+                        NavigationLink(destination: getPageViewForProduct(product)) {
+                            VStack {
+                                Spacer()
+                                Image("image\(product.last!)")
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(width: 150, height: 150)
+
+                                Text(product)
+                                    .font(.caption)
+                                    .foregroundColor(.black)
+                            }
+                        }
+                    }
+                }
+                .padding()
+            }
+
+            VStack {
+                Spacer()
+
+                NavigationLink(destination: ProductsView()) {
+                    Text("All Products")
+                        .foregroundColor(.white)
+                        .padding()
+                        .background(Color.black)
+                        .cornerRadius(8)
+                }
+                .padding()
+
+                Spacer()
+            }
+        }
+    }
+
+    func getPageViewForProduct(_ product: String) -> some View {
+        guard let productNumber = Int(String(product.last ?? "1")) else {
+            return AnyView(EmptyView())
+        }
+        switch productNumber {
+        case 1:
+            return AnyView(Page1View())
+        case 2:
+            return AnyView(Page2View())
+        case 3:
+            return AnyView(Page3View())
+        case 4:
+            return AnyView(Page4View())
+        case 5:
+            return AnyView(Page5View())
+        case 6:
+            return AnyView(Page6View())
+        default:
+            return AnyView(EmptyView())
+        }
+    }
+}
+
+// California State View
+struct CAProductsView: View {
+    @State private var searchText = ""
+    let allProducts = (3..<5).map { "Product \($0)" }
+
+    var filteredProducts: [String] {
+        if searchText.isEmpty {
+            return allProducts
+        } else {
+            return allProducts.filter { $0.localizedCaseInsensitiveContains(searchText) }
+        }
+    }
+
+    var body: some View {
+        VStack {
+            SearchBar(text: $searchText)
+
+            Text("CA Product List")
+                .font(.largeTitle)
+                .foregroundColor(.black)
+                .padding()
+
+            let gridItems = [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)]
+
+            ScrollView {
+                LazyVGrid(columns: gridItems, spacing: 10) {
+                    ForEach(filteredProducts, id: \.self) { product in
+                        NavigationLink(destination: getPageViewForProduct(product)) {
+                            VStack {
+                                Spacer()
+                                Image("image\(product.last!)")
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(width: 150, height: 150)
+
+                                Text(product)
+                                    .font(.caption)
+                                    .foregroundColor(.black)
+                            }
+                        }
+                    }
+                }
+                .padding()
+            }
+
+            VStack {
+                Spacer()
+
+                NavigationLink(destination: ProductsView()) {
+                    Text("All Products")
+                        .foregroundColor(.white)
+                        .padding()
+                        .background(Color.black)
+                        .cornerRadius(8)
+                }
+                .padding()
+
+                Spacer()
+            }
+        }
+    }
+
+    func getPageViewForProduct(_ product: String) -> some View {
+        guard let productNumber = Int(String(product.last ?? "1")) else {
+            return AnyView(EmptyView())
+        }
+        switch productNumber {
+        case 1:
+            return AnyView(Page1View())
+        case 2:
+            return AnyView(Page2View())
+        case 3:
+            return AnyView(Page3View())
+        case 4:
+            return AnyView(Page4View())
+        case 5:
+            return AnyView(Page5View())
+        case 6:
+            return AnyView(Page6View())
+        default:
+            return AnyView(EmptyView())
+        }
+    }
+}
+
+// Nevada State View
+struct NVProductsView: View {
+    @State private var searchText = ""
+    let allProducts = (5..<7).map { "Product \($0)" }
+
+    var filteredProducts: [String] {
+        if searchText.isEmpty {
+            return allProducts
+        } else {
+            return allProducts.filter { $0.localizedCaseInsensitiveContains(searchText) }
+        }
+    }
+
+    var body: some View {
+        VStack {
+            SearchBar(text: $searchText)
+
+            Text("NV Product List")
+                .font(.largeTitle)
+                .foregroundColor(.black)
+                .padding()
+
+            let gridItems = [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)]
+
+            ScrollView {
+                LazyVGrid(columns: gridItems, spacing: 10) {
+                    ForEach(filteredProducts, id: \.self) { product in
+                        NavigationLink(destination: getPageViewForProduct(product)) {
+                            VStack {
+                                Spacer()
+                                Image("image\(product.last!)")
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(width: 150, height: 150)
+
+                                Text(product)
+                                    .font(.caption)
+                                    .foregroundColor(.black)
+                            }
+                        }
+                    }
+                }
+                .padding()
+            }
+
+            VStack {
+                Spacer()
+
+                NavigationLink(destination: ProductsView()) {
+                    Text("All Products")
+                        .foregroundColor(.white)
+                        .padding()
+                        .background(Color.black)
+                        .cornerRadius(8)
+                }
+                .padding()
+
+                Spacer()
+            }
+        }
+    }
+
+    func getPageViewForProduct(_ product: String) -> some View {
+        guard let productNumber = Int(String(product.last ?? "1")) else {
+            return AnyView(EmptyView())
+        }
+        switch productNumber {
+        case 1:
+            return AnyView(Page1View())
+        case 2:
+            return AnyView(Page2View())
+        case 3:
+            return AnyView(Page3View())
+        case 4:
+            return AnyView(Page4View())
+        case 5:
+            return AnyView(Page5View())
+        case 6:
+            return AnyView(Page6View())
+        default:
+            return AnyView(EmptyView())
         }
     }
 }

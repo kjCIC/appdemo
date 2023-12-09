@@ -1,0 +1,110 @@
+//
+//  ContentView.swift
+//  Hackathon Demo
+//
+//  Created by Kyley Jones on 12/8/23.
+//
+
+import SwiftUI
+
+extension Color {
+    init(hex:UInt) {
+        self.init(
+            .sRGB,
+            red: Double((hex & 0xFF0000) >> 16)/255.0,
+            green: Double((hex & 0x00FF00) >> 8)/255.0,
+            blue: Double(hex & 0x0000FF)/255.0,
+            opacity: 1.0)
+    }
+}
+
+struct SearchBar: View {
+    @Binding var text: String
+
+    var body: some View {
+        HStack {
+            TextField("Search...", text: $text)
+                .padding(8)
+                .background(Color(.systemGray6))
+                .cornerRadius(10)
+                .padding([.leading, .trailing], 10)
+        }
+        .padding(.top, 10)
+        .padding(.bottom, 10)
+    }
+}
+
+struct FontNameManager {
+    struct Montserrat {
+        static let light = "Montserrat-Light"
+        static let regular = "Montserrat-Regular"
+        static let bold = "Montserrat-ExtraBold"
+    }
+}
+
+let headerFont = Font.custom(FontNameManager.Montserrat.bold, size:UIFont.preferredFont(forTextStyle:.largeTitle).pointSize)
+
+let bodyFont = Font.custom(FontNameManager.Montserrat.regular, size:UIFont.preferredFont(forTextStyle:.body).pointSize)
+
+struct ContentView: View {
+    var body: some View {
+        NavigationView {
+            ZStack {
+                Color(hex: 0xEDE7DF).ignoresSafeArea()
+                
+                VStack {
+                
+                    Image(systemName: "globe")
+                        .imageScale(.large)
+                        .foregroundStyle(.tint)
+                    
+                    Text("Hello, world!")
+                        .font(headerFont)
+                    
+                    NavigationLink(destination: ProductView()){
+                        Text("Next Page")
+                            .padding()
+                            .foregroundColor(.black)
+                            .background(Color.green)
+                            .cornerRadius(9)
+                    }
+                }
+                .padding()
+            }
+        }
+    }
+}
+
+struct ProductView: View {
+@State private var searchText = ""
+    let allProducts = (1..<3).map { "Product \($0)" }
+
+    var filteredProducts: [String] {
+        if searchText.isEmpty {
+            return allProducts
+        } else {
+            return allProducts.filter { $0.localizedCaseInsensitiveContains(searchText) }
+        }
+    }
+    
+    var body: some View {
+            VStack {
+                SearchBar(text: $searchText)
+                Text("Product page")
+            }
+            .padding()
+    }
+}
+
+struct WaxView: View {
+    var body: some View {
+            VStack {
+                Text("Product page")
+            }
+            .padding()
+    }
+}
+
+#Preview {
+    ContentView()
+}
